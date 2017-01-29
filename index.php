@@ -18,19 +18,13 @@
 	<div id="container1" style="width:100%; height:300px;"></div>	
 	<div id="container2" style="width:100%; height:300px;"></div>	
     <script>
-	
-		var file = "meteo.json"
-		var fileHier = "meteo_hier.json"
-		
-		var xhr = new XMLHttpRequest();
-		var xhr_hier = new XMLHttpRequest();
 
-		// On souhaite juste récupérer le contenu du fichier, la méthode GET suffit amplement :
-		xhr.open('GET', file);
-		xhr.addEventListener('readystatechange', function() { // On gère ici une requête asynchrone			
-			if (xhr.readyState === 4 && xhr.status === 200) { // Si le fichier est chargé sans erreur
-
-					var response = JSON.parse(xhr.responseText);
+		function sensorData (dataName,fileName) {
+			this.dataName = dataName;
+			this.fileName = fileName;
+			this.xhr = new XMLHttpRequest();
+			this.plotData = function() {
+				var response = JSON.parse(this.xhr.responseText);
 					
 					var temperatureArray =[];
 					var HumiditeArray=[];
@@ -45,7 +39,11 @@
 					year = isoDate.getUTCFullYear();
 					dayEnd = new Date(year,month,day,23,59);
 					dayEnd = dayEnd.setUTCHours(dayEnd.getUTCHours()-dayEnd.getTimezoneOffset()/60);
-				
+					
+					if (this.dataName=="today"){
+						var dataStr = Highcharts.dateFormat('%e-%b',isoDate);
+					}
+					
 					for (elem in response) {
 												
 						var dataTime =  new Date(response[elem][0]*1000);
@@ -102,14 +100,14 @@
 							series: [{
 								yAxis:0,
 								valueSuffix:'°C',
-								name: 'Température',
+								name: 'Température ' + dataStr ,
 								data: temperatureArray,
 								color: '#cd5b45',
 								visible:true
 							}, {
 								yAxis:1,
 								valueSuffix:'%',
-								name: 'Humidité',
+								name: 'Humidité '+ dataStr, 
 								data: HumiditeArray
 							},
 							]
@@ -142,18 +140,32 @@
 							},
 							series: [{
 								valueSuffix:'°C',
-								name: 'Humidité de la terre',
+								name: 'Humidité de la terre '+dataStr,
 								data: EarthArray,
 								color: "#00cc00"
 							},
 							]
 						});
 					});
+			};
+		}
+
+
+
+		var TodayData = new sensorData("today","meteo.json");
+		
+		// On souhaite juste récupérer le contenu du fichier, la méthode GET suffit amplement :
+		TodayData.xhr.open('GET', TodayData.fileName);
+		TodayData.xhr.addEventListener('readystatechange', function() { // On gère ici une requête asynchrone			
+			if (TodayData.xhr.readyState === 4 && TodayData.xhr.status === 200) { // Si le fichier est chargé sans erreur
+				
+				TodayData.plotData()					
+				
 				}
 		}, false);
 			
 		
-		xhr.send(null); // La requête est prête, on envoie tout !
+		TodayData.xhr.send(null); // La requête est prête, on envoie tout !
 		
  
     </script>
